@@ -7,14 +7,30 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+
+        stage('Clean Workspace') {
             steps {
-                // Checkout your code (Terraform configuration)
-                checkout scm
+                script {
+                    cleanWs()
+                }
             }
         }
 
-        stage('Install Terraform') {
+        stage('Checkout') {
+            steps {
+                script{
+                    git (
+                        url: "https://github.com/mahendra-palla/terraform_IAM_creation.git",
+                        branch: "main",
+                        changelog:  true,
+                        poll: true
+                )
+
+                }
+            }
+        }
+
+        /*stage('Install Terraform') {
             steps {
                 script {
                     // Install Terraform
@@ -23,8 +39,40 @@ pipeline {
                     sh 'sudo mv terraform /usr/local/bin/'
                 }
             }
-        }
+        } */
 
+        
+        stage('Install Terraform') {
+            steps {
+                script {
+                    // Install Terraform
+                    sh '''
+                        echo "Installing Terraform version ${TERRAFORM_VERSION}"
+
+                        # Update APK package index
+                        apk update
+
+                        # Install dependencies
+                        apk add --no-cache curl unzip
+
+                        # Download Terraform
+                        curl -LO https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+
+                        # Unzip the downloaded file
+                        unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+
+                        # Move Terraform binary to /usr/local/bin
+                        mv terraform /usr/local/bin/
+
+                        # Clean up
+                        rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+
+                        # Verify installation
+                        terraform version
+                    '''
+                }
+            }
+        }
         stage('Terraform Init') {
             steps {
                 script {
@@ -59,4 +107,5 @@ pipeline {
             sh 'terraform destroy -auto-approve || true'
         }
     }
+}
 }
