@@ -1,6 +1,6 @@
 # Create an IAM user
 resource "aws_iam_user" "admin" {
-  name = "admin"
+  name = "user-1"
   tags = {
     Name = "Admin User"
   }
